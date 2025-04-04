@@ -5,6 +5,13 @@ spring:
     redis:
       host: localhost
       port: 6379
+      password: redis
+      database: redis
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+      cache-null-value: false
   rabbitmq:
     host: localhost
     port: 5672

@@ -19,6 +19,7 @@ services:
       - rabbit-network
   redis:
     image: redis:alpine
+    container_name: redis
     ports:
       - "6379:6379"
     volumes:
@@ -29,6 +30,11 @@ services:
     build:
       context: ./publisher
       dockerfile: Dockerfile
+    environment:
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis
+      - REDIS_DATABASE=redis
     depends_on:
       - rabbitmq
       - redis
