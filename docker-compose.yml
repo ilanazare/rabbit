@@ -18,12 +18,17 @@ services:
     networks:
       - rabbit-network
   redis:
-    image: redis:alpine
+    image: redis:latest
     container_name: redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - rabbit-network
   publisher:
@@ -33,10 +38,10 @@ services:
     environment:
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=redis
-      - REDIS_DATABASE=redis
     depends_on:
       - rabbitmq
+      - redis
+    links:
       - redis
     ports:
       - "8081:8081"
@@ -56,6 +61,7 @@ services:
       - rabbit-network
 volumes:
   rabbitmq-data:
+  redis_data:
 networks:
   rabbit-network:
     driver: bridge
