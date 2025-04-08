@@ -6,3 +6,14 @@ spring:
     port: 5672
     username: guest
     password: guest
+  datasource:
+    url: jdbc:mysql://localhost:3306/rabbit
+    username: root
+    password: rabbit
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    flyway:
+      enabled: true
+    jpa:
+      hibernate:
+        ddl-auto: update
+      show-sql: true

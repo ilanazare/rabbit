@@ -1,4 +1,21 @@
 services:
+  datasource:
+    image: mysql:8.3-oraclelinux8
+    container_name: datasource
+    restart: always
+    environment:
+      MYSQL_USER: 'rabbit'
+      MYSQL_DATABASE: 'rabbit'
+      MYSQL_PASSWORD: 'rabbit'
+      MYSQL_ROOT_PASSWORD: 'rabbit'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+    networks:
+      - rabbit-network
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -54,12 +71,14 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - datasource
     ports:
       - "8080:8080"
     restart: on-failure
     networks:
       - rabbit-network
 volumes:
+  my-db:
   rabbitmq-data:
   redis_data:
 networks:
