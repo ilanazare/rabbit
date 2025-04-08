@@ -2,8 +2,10 @@ package com.example.controller
 
 import com.example.entity.Customer
 import com.example.service.CustomerService
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 
 @RestController
@@ -17,5 +19,12 @@ class CustomerController(
     ): ResponseEntity<String> {
         customerService.createCustomer(request)
         return ResponseEntity.ok("Customer set successfully in database: ${request.customer}")
+    }
+
+    @GetMapping
+    fun findCustomerByCustomer(@RequestParam customer: String): ResponseEntity<Optional<Customer>> {
+        return customerService.findCustomerByCustomer(customer).let {
+            ResponseEntity.ok(it)
+        }
     }
 }
