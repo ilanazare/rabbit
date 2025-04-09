@@ -4,14 +4,17 @@ services:
     container_name: datasource
     restart: always
     environment:
+      MYSQL_ROOT_PASSWORD: 'root'
       MYSQL_USER: 'rabbit'
       MYSQL_DATABASE: 'rabbit'
       MYSQL_PASSWORD: 'rabbit'
-      MYSQL_ROOT_PASSWORD: 'rabbit'
     ports:
       - '3306:3306'
-    expose:
-      - '3306'
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 10s
+      retries: 10
     volumes:
       - my-db:/var/lib/mysql
     networks:
@@ -70,10 +73,18 @@ services:
       context: ./consumer
       dockerfile: Dockerfile
     depends_on:
-      - rabbitmq
-      - datasource
+      datasource:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://datasource:3306/rabbit
+      SPRING_DATASOURCE_USERNAME: rabbit
+      SPRING_DATASOURCE_PASSWORD: rabbit
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
     restart: on-failure
     networks:
       - rabbit-network
