@@ -4,21 +4,35 @@ spring:
   data:
     redis:
       repository-type: default
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
       timeout: 5000
       lettuce:
         pool:
           max-active: 8
           max-idle: 8
           min-idle: 0
+        shutdown-timeout: 1000
+        retry:
+          max-attempts: 3
+          max-interval: 1000
   cache:
     type: redis
     redis:
       time-to-live: 600000
       cache-null-value: false
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5000
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-interval: 10000
+        multiplier: 2
+        max-attempts: 5
+  lifecycle:
+    timeout-per-shutdown-phase: 30s

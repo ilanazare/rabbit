@@ -56,13 +56,17 @@ services:
       context: ./publisher
       dockerfile: Dockerfile
     environment:
-      - REDIS_HOST=localhost
-      - REDIS_PORT=6379
+     SPRING_DATA_REDIS_HOST: redis
+     SPRING_DATA_REDIS_PORT: 6379
+     SPRING_RABBITMQ_HOST: rabbitmq
+     SPRING_RABBITMQ_PORT: 5672
+     SPRING_RABBITMQ_USERNAME: guest
+     SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
-      - rabbitmq
-      - redis
-    links:
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8081:8081"
     restart: on-failure
