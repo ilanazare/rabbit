@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          env:
+            - name:  RABBITMQ_DEFAULT_USER
+              value: "guest"
+            - name: RABBITMQ_DEFAULT_PASS
+              value: "guest"
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          livenessProbe:
+            exec:
+              command: ["rabbitmqctl", "status"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["rabbitmqctl", "status"]
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: rabbitmq-persistent-storage
+              mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: rabbitmq-persistent-storage
+          persistentVolumeClaim:
+            claimName: rabbitmq-pv-claim
