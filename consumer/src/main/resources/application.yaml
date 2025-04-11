@@ -7,9 +7,9 @@ spring:
     username: guest
     password: guest
   datasource:
-    url: jdbc:mysql://datasource:3306/rabbit
-    username: rabbit
-    password: rabbit
+    url: jdbc:mysql://datasource:3306/rabbitmq
+    username: rabbitmq
+    password: rabbitmq
     driver-class-name: com.mysql.cj.jdbc.Driver
     flyway:
       enabled: true

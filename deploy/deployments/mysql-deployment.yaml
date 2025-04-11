@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: mysql-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      securityContext:
+        fsGroup: 999  # This ensures MySQL user can write to volumes
+      initContainers:
+        - name: init-mysql
+          image: mysql:8.3-oraclelinux8
+          command: ['sh', '-c', 'if [ ! -d /var/lib/mysql/mysql ]; then mysqld --initialize-insecure --user=mysql; fi && chown -R mysql:mysql /var/lib/mysql']
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      containers:
+        - name: mysql
+          image: mysql:8.3-oraclelinux8
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root"
+            - name: MYSQL_USER
+              value: "rabbitmq"
+            - name: MYSQL_PASSWORD
+              value: "rabbitmq"
+            - name: MYSQL_DATABASE
+              value: "rabbitmq"
+          ports:
+            - containerPort: 3306
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-uroot", "-proot"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-uroot", "-proot"]
+            initialDelaySeconds: 10  # Increased from 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+          lifecycle:
+            postStart:
+              exec:
+                command: ["sh", "-c", "for i in {1..30}; do mysqladmin ping -uroot -proot && break || sleep 1; done && mysql -uroot -proot -e \"CREATE USER IF NOT EXISTS 'rabbitmq'@'%' IDENTIFIED BY 'rabbitmq'; CREATE DATABASE IF NOT EXISTS rabbitmq; GRANT ALL PRIVILEGES ON rabbitmq.* TO 'rabbitmq'@'%'; FLUSH PRIVILEGES;\" || true"]
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
