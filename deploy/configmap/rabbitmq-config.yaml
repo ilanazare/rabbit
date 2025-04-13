@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: rabbit
+data:
+  RABBITMQ_DEFAULT_USER: "guest"
+  RABBITMQ_DEFAULT_PASS: "guest"
+  RABBITMQ_CONFIG_FILE: "/etc/rabbitmq/rabbitmq.conf"
+  RABBITMQ_ERLANG_COOKIE: "secretcookie"
+  RABBITMQ_NODENAME: "rabbit@localhost"

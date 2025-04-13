@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: redis-system
+  namespace: rabbit
 spec:
   replicas: 1
   selector:
@@ -16,6 +16,7 @@ spec:
       containers:
         - name: redis
           image: redis:latest
+          command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
           ports:
             - containerPort: 6379
           livenessProbe:
@@ -33,7 +34,12 @@ spec:
           volumeMounts:
             - name: redis-persistent-storage
               mountPath: /data
+            - name: redis-config
+              mountPath: /usr/local/etc/redis/
       volumes:
         - name: redis-persistent-storage
           persistentVolumeClaim:
             claimName: redis-pv-claim
+        - name: redis-config
+          configMap:
+            name: redis-config

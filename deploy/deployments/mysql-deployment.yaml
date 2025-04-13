@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: mysql-system
+  namespace: rabbit
 spec:
   replicas: 1
   selector:
@@ -13,27 +13,41 @@ spec:
       labels:
         app: mysql
     spec:
+      terminationGracePeriodSeconds: 60
       securityContext:
-        fsGroup: 999  # This ensures MySQL user can write to volumes
+        fsGroup: 999
       initContainers:
         - name: init-mysql
           image: mysql:8.3-oraclelinux8
-          command: ['sh', '-c', 'if [ ! -d /var/lib/mysql/mysql ]; then mysqld --initialize-insecure --user=mysql; fi && chown -R mysql:mysql /var/lib/mysql']
+          command: ['sh', '-c', 'if [ ! -d /var/lib/mysql/mysql ]; then mysqld --initialize-insecure --user=mysql; fi && chown -R mysql:mysql /var/lib/mysql && chmod 750 /var/lib/mysql']
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
       containers:
         - name: mysql
           image: mysql:8.3-oraclelinux8
+          command: ["sh", "-c", "exec docker-entrypoint.sh mysqld"]
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "root"
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-root-password
             - name: MYSQL_USER
-              value: "rabbitmq"
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-user
             - name: MYSQL_PASSWORD
-              value: "rabbitmq"
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-password
             - name: MYSQL_DATABASE
-              value: "rabbitmq"
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-database
           ports:
             - containerPort: 3306
           livenessProbe:
@@ -45,16 +59,12 @@ spec:
           readinessProbe:
             exec:
               command: ["mysqladmin", "ping", "-uroot", "-proot"]
-            initialDelaySeconds: 10  # Increased from 5
+            initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 1
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
-          lifecycle:
-            postStart:
-              exec:
-                command: ["sh", "-c", "for i in {1..30}; do mysqladmin ping -uroot -proot && break || sleep 1; done && mysql -uroot -proot -e \"CREATE USER IF NOT EXISTS 'rabbitmq'@'%' IDENTIFIED BY 'rabbitmq'; CREATE DATABASE IF NOT EXISTS rabbitmq; GRANT ALL PRIVILEGES ON rabbitmq.* TO 'rabbitmq'@'%'; FLUSH PRIVILEGES;\" || true"]
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:

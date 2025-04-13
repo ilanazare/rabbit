@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: rabbit
+data:
+  mysql-root-password: "root"
+  mysql-user: "rabbitmq"
+  mysql-password: "rabbitmq"
+  mysql-database: "rabbitmq"
+  init-script: |
+    #!/bin/bash
+    for i in {1..30}; do
+      mysqladmin ping -uroot -proot && break || sleep 1
+    done
+    mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'rabbitmq'@'%' IDENTIFIED BY 'rabbitmq'; CREATE DATABASE IF NOT EXISTS rabbitmq; GRANT ALL PRIVILEGES ON rabbitmq.* TO 'rabbitmq'@'%'; FLUSH PRIVILEGES;"

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: publisher
-  namespace: publisher-app
+  namespace: rabbit
 spec:
   selector:
     app: publisher
